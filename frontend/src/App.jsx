@@ -120,3 +120,20 @@ function App() {
 }
 
 export default App
+
+
+// import { Navigate, Routes, Route } from "react-router-dom";
+// import Signup from "./pages/Signup";
+// import Login from "./pages/Login";
+
+// function App() {
+//   return (
+//     <Routes>
+//       <Route path="/" element={<Navigate to="/signup" replace />} />
+//       <Route path="/signup" element={<Signup />} />
+//       <Route path="/login" element={<Login />} />
+//     </Routes>
+//   );
+// }
+
+// export default App;
