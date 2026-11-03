@@ -1,19 +1,30 @@
-
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import "../styles/Login.css";
+
 import {
   validatePhone,
   validateOTP,
 } from "../utils/validation";
+
+import {
+  createRecaptchaVerifier,
+  sendPhoneOTP,
+} from "../firebase/phoneAuth";
 
 function Login() {
   const [phone, setPhone] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState("");
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSendOTP = (e) => {
+  const confirmationResultRef = useRef(null);
+  const recaptchaRef = useRef(null);
+
+
+  // Send Firebase OTP
+  const handleSendOTP = async (e) => {
     e.preventDefault();
 
     if (!validatePhone(phone)) {
@@ -21,12 +32,59 @@ function Login() {
       return;
     }
 
+    setLoading(true);
     setMessage("");
-    setOtp("");
-    setOtpSent(true);
+
+    try {
+      // Clear an older reCAPTCHA instance
+      if (recaptchaRef.current) {
+        recaptchaRef.current.clear();
+        recaptchaRef.current = null;
+      }
+
+      const verifier = createRecaptchaVerifier();
+      recaptchaRef.current = verifier;
+
+      const formattedPhone = `+91${phone}`;
+
+      const confirmation = await sendPhoneOTP(
+        formattedPhone,
+        verifier
+      );
+
+      confirmationResultRef.current = confirmation;
+
+      setOtp("");
+      setOtpSent(true);
+      setMessage("OTP sent successfully!");
+
+    } catch (error) {
+      console.error("Firebase Login OTP error:", error);
+
+      setMessage(
+        error.code === "auth/invalid-phone-number"
+          ? "Invalid phone number. Please check your number."
+          : error.code === "auth/too-many-requests"
+          ? "Too many attempts. Please try again later."
+          : error.code === "auth/billing-not-enabled"
+          ? "SMS billing is not enabled. Use a configured Firebase test number."
+          : error.code === "auth/captcha-check-failed"
+          ? "reCAPTCHA verification failed. Please try again."
+          : "Unable to send OTP. Please try again."
+      );
+
+      if (recaptchaRef.current) {
+        recaptchaRef.current.clear();
+        recaptchaRef.current = null;
+      }
+
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleVerifyOTP = (e) => {
+  // Verify Firebase OTP
+  const handleVerifyOTP = async (e) => {
     e.preventDefault();
 
     if (!validateOTP(otp)) {
@@ -34,9 +92,68 @@ function Login() {
       return;
     }
 
-    setMessage(
-      "OTP format is valid. Firebase verification will be added in Step 3."
-    );
+    if (!confirmationResultRef.current) {
+      setMessage("Please request a new OTP first.");
+      return;
+    }
+
+    setLoading(true);
+    setMessage("");
+
+    try {
+      const result =
+        await confirmationResultRef.current.confirm(otp);
+
+      console.log("Firebase authenticated user:", result.user.uid);
+
+      // IMPORTANT:
+      // Phone verification alone does not prove that this user
+      // has completed ReGifty signup.
+      // Check the user's registration in your database here
+      // before allowing access to the dashboard.
+
+      setMessage("Phone verified successfully!");
+
+      confirmationResultRef.current = null;
+
+      if (recaptchaRef.current) {
+        recaptchaRef.current.clear();
+        recaptchaRef.current = null;
+      }
+
+      // Temporary success behaviour.
+      // Replace with registered-user database check and
+      // dashboard navigation before production use.
+      // navigate("/dashboard");
+
+    } catch (error) {
+      console.error("Firebase OTP verification error:", error);
+
+      setMessage(
+        error.code === "auth/invalid-verification-code"
+          ? "Incorrect OTP. Please enter the correct code."
+          : error.code === "auth/code-expired"
+          ? "OTP expired. Please request a new OTP."
+          : "OTP verification failed. Please try again."
+      );
+
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Change phone number
+  const handleChangePhone = () => {
+    confirmationResultRef.current = null;
+
+    if (recaptchaRef.current) {
+      recaptchaRef.current.clear();
+      recaptchaRef.current = null;
+    }
+
+    setOtpSent(false);
+    setOtp("");
+    setMessage("");
   };
 
   return (
@@ -100,8 +217,12 @@ function Login() {
                     required
                   />
 
-                  <button type="submit" className="auth-button">
-                    Continue with OTP
+                  <button
+                    type="submit"
+                    className="auth-button"
+                    disabled={loading}
+                  >
+                    {loading ? "Sending OTP..." : "Continue with OTP"}
                   </button>
 
                 </form>
@@ -126,24 +247,27 @@ function Login() {
                     required
                   />
 
-                  <button type="submit" className="auth-button">
-                    Verify OTP
+                  <button
+                    type="submit"
+                    className="auth-button"
+                    disabled={loading}
+                  >
+                    {loading ? "Verifying..." : "Verify OTP"}
                   </button>
 
                   <button
                     type="button"
                     className="text-button"
-                    onClick={() => {
-                      setOtpSent(false);
-                      setOtp("");
-                      setMessage("");
-                    }}
+                    onClick={handleChangePhone}
+                    disabled={loading}
                   >
                     Change phone number
                   </button>
 
                 </form>
               )}
+
+              <div id="recaptcha-container"></div>
 
               {message && (
                 <p className="auth-message">{message}</p>
