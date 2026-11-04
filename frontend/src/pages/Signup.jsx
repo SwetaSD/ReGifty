@@ -1,6 +1,6 @@
 
 import { useState, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "../styles/Signup.css";
 
 import { db } from "../firebase/firebase";
@@ -29,6 +29,7 @@ import {
 } from "../firebase/phoneAuth";
 
 function Signup() {
+  const navigate = useNavigate();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -165,7 +166,8 @@ function Signup() {
         });
       });
 
-      setMessage("Account created successfully!");
+      setMessage("Signup successful! Welcome to ReGifty.");
+      navigate("/home");
 
       confirmationResultRef.current = null;
 

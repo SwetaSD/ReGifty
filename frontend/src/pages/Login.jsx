@@ -14,6 +14,7 @@ import {
 import {
   createRecaptchaVerifier,
   sendPhoneOTP,
+  resetRecaptchaVerifier,
 } from "../firebase/phoneAuth";
 
 function Login() {
@@ -42,13 +43,13 @@ function Login() {
 
     try {
       // Clear an older reCAPTCHA instance
-      if (recaptchaRef.current) {
-        recaptchaRef.current.clear();
-        recaptchaRef.current = null;
-      }
+      // Reset the previous shared reCAPTCHA instance
+      resetRecaptchaVerifier();
+      recaptchaRef.current = null;
 
       const verifier = createRecaptchaVerifier();
       recaptchaRef.current = verifier;
+      
 
       const formattedPhone = `+91${phone}`;
 
@@ -78,10 +79,8 @@ function Login() {
                 : "Unable to send OTP. Please try again."
       );
 
-      if (recaptchaRef.current) {
-        recaptchaRef.current.clear();
-        recaptchaRef.current = null;
-      }
+      resetRecaptchaVerifier();
+      recaptchaRef.current = null;
 
     } finally {
       setLoading(false);
