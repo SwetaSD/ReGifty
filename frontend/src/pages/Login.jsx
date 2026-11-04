@@ -1,6 +1,10 @@
 import { useState, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "../styles/Login.css";
+
+import { auth, db } from "../firebase/firebase";
+import { signOut } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 
 import {
   validatePhone,
@@ -13,6 +17,7 @@ import {
 } from "../firebase/phoneAuth";
 
 function Login() {
+  const navigate = useNavigate();
   const [phone, setPhone] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState("");
@@ -65,12 +70,12 @@ function Login() {
         error.code === "auth/invalid-phone-number"
           ? "Invalid phone number. Please check your number."
           : error.code === "auth/too-many-requests"
-          ? "Too many attempts. Please try again later."
-          : error.code === "auth/billing-not-enabled"
-          ? "SMS billing is not enabled. Use a configured Firebase test number."
-          : error.code === "auth/captcha-check-failed"
-          ? "reCAPTCHA verification failed. Please try again."
-          : "Unable to send OTP. Please try again."
+            ? "Too many attempts. Please try again later."
+            : error.code === "auth/billing-not-enabled"
+              ? "SMS billing is not enabled. Use a configured Firebase test number."
+              : error.code === "auth/captcha-check-failed"
+                ? "reCAPTCHA verification failed. Please try again."
+                : "Unable to send OTP. Please try again."
       );
 
       if (recaptchaRef.current) {
@@ -106,13 +111,17 @@ function Login() {
 
       console.log("Firebase authenticated user:", result.user.uid);
 
-      // IMPORTANT:
-      // Phone verification alone does not prove that this user
-      // has completed ReGifty signup.
-      // Check the user's registration in your database here
-      // before allowing access to the dashboard.
+      // Check whether the user has a ReGifty profile.
+      const userRef = doc(db, "users", result.user.uid);
+      const userDoc = await getDoc(userRef);
 
-      setMessage("Phone verified successfully!");
+      if (userDoc.exists()) {
+        setMessage("Authentication successful! Welcome to ReGifty.");
+        navigate("/home");
+      } else {
+        await signOut(auth);
+        setMessage("Account not found. Please sign up first.");
+      }
 
       confirmationResultRef.current = null;
 
@@ -121,11 +130,6 @@ function Login() {
         recaptchaRef.current = null;
       }
 
-      // Temporary success behaviour.
-      // Replace with registered-user database check and
-      // dashboard navigation before production use.
-      // navigate("/dashboard");
-
     } catch (error) {
       console.error("Firebase OTP verification error:", error);
 
@@ -133,8 +137,8 @@ function Login() {
         error.code === "auth/invalid-verification-code"
           ? "Incorrect OTP. Please enter the correct code."
           : error.code === "auth/code-expired"
-          ? "OTP expired. Please request a new OTP."
-          : "OTP verification failed. Please try again."
+            ? "OTP expired. Please request a new OTP."
+            : "Authentication failed. Please try again."
       );
 
     } finally {
