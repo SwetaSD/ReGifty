@@ -3,6 +3,18 @@ import { useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import "../styles/Signup.css";
 
+import { db } from "../firebase/firebase";
+import {
+  doc,
+  setDoc,
+  serverTimestamp,
+  runTransaction
+} from "firebase/firestore";
+
+import { getAdditionalUserInfo } from "firebase/auth";
+
+
+
 import {
   validateName,
   validateEmail,
@@ -115,9 +127,45 @@ function Signup() {
     try {
       const result = await confirmationResultRef.current.confirm(otp);
 
-      console.log("Firebase authenticated user:", result.user.uid);
+      const user = result.user;
+      const normalizedEmail = email.trim().toLowerCase();
 
-      setMessage("Phone verified successfully! Signup successful.");
+
+
+      // Create a unique email index and user profile atomically.
+      const emailId = encodeURIComponent(normalizedEmail);
+
+      const emailRef = doc(db, "emailIndex", emailId);
+      const userRef = doc(db, "users", user.uid);
+
+      await runTransaction(db, async (transaction) => {
+        const userDoc = await transaction.get(userRef);
+        const emailDoc = await transaction.get(emailRef);
+
+        // Check whether this phone number already has a ReGifty profile.
+        if (userDoc.exists()) {
+          throw new Error("PHONE_ALREADY_REGISTERED");
+        }
+
+        // Check whether this email is already registered.
+        if (emailDoc.exists()) {
+          throw new Error("EMAIL_ALREADY_REGISTERED");
+        }
+
+        transaction.set(emailRef, {
+          uid: user.uid,
+        });
+
+        transaction.set(userRef, {
+          fullName: fullName.trim(),
+          email: normalizedEmail,
+          phoneNumber: user.phoneNumber || `+91${phone}`,
+          firebaseUid: user.uid,
+          createdAt: serverTimestamp(),
+        });
+      });
+
+      setMessage("Account created successfully!");
 
       confirmationResultRef.current = null;
 
@@ -129,13 +177,17 @@ function Signup() {
     } catch (error) {
       console.error("OTP verification error:", error);
 
-      setMessage(
-        error.code === "auth/invalid-verification-code"
-          ? "Incorrect OTP. Please enter the correct code."
-          : error.code === "auth/code-expired"
-            ? "OTP expired. Please request a new OTP."
-            : "OTP verification failed. Please try again."
-      );
+      if (error.message === "PHONE_ALREADY_REGISTERED") {
+        setMessage("This phone number is already registered. Please login.");
+      } else if (error.message === "EMAIL_ALREADY_REGISTERED") {
+        setMessage("This email is already registered. Please login.");
+      } else if (error.code === "auth/invalid-verification-code") {
+        setMessage("Incorrect OTP. Please enter the correct code.");
+      } else if (error.code === "auth/code-expired") {
+        setMessage("OTP expired. Please request a new OTP.");
+      } else {
+        setMessage("Signup failed. Please try again.");
+      }
 
     } finally {
       setLoading(false);
@@ -147,7 +199,7 @@ function Signup() {
     confirmationResultRef.current = null;
 
     resetRecaptchaVerifier();
-    recaptchaRef.current = null; 
+    recaptchaRef.current = null;
 
     setOtpSent(false);
     setOtp("");
