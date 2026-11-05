@@ -666,3 +666,24 @@
     flex-direction: column;
   }
 }
+.hero-buttons button,
+.bottom-cta button {
+  font-family: inherit;
+  border: none;
+  cursor: pointer;
+}
+.hero-buttons .secondary-button {
+  background: transparent;
+  color: #d5a14a;
+  border: 1px solid #d5a14a;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  cursor: pointer;
+  appearance: none;
+}
+
+.hero-buttons .secondary-button:hover {
+  background: #d5a14a;
+  color: #111111;
+}

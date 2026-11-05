@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
+import AddGift from "./pages/AddGift";
+import ExploreGifts from "./pages/ExploreGifts";
 
 import { auth } from "./firebase/firebase";
 
@@ -17,6 +19,7 @@ function App() {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+
       setUser(currentUser);
       setLoading(false);
     });
@@ -45,6 +48,22 @@ function App() {
         element={
           <ProtectedRoute user={user} loading={loading}>
             <Profile />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/add-gift"
+        element={
+          <ProtectedRoute user={user} loading={loading}>
+            <AddGift />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/explore"
+        element={
+          <ProtectedRoute user={user} loading={loading}>
+            <ExploreGifts />
           </ProtectedRoute>
         }
       />

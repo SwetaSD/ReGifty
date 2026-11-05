@@ -1,3 +1,4 @@
+
 import "../styles/Home.css";
 import { useNavigate } from "react-router-dom";
 import { signOut } from "firebase/auth";
@@ -36,6 +37,7 @@ const categories = [
 
 function Home() {
   const navigate = useNavigate();
+
   const handleLogout = async () => {
     try {
       await signOut(auth);
@@ -44,6 +46,7 @@ function Home() {
       console.error("Logout error:", error);
     }
   };
+
   return (
     <div className="home-page">
 
@@ -99,13 +102,21 @@ function Home() {
             </p>
 
             <div className="hero-buttons">
-              <a href="#categories" className="primary-button">
-                Explore Gifts <span>→</span>
-              </a>
+              <button
+                type="button"
+                className="primary-button"
+                onClick={() => navigate("/explore")}
+              >
+                Start Exploring <span>→</span>
+              </button>
 
-              <a href="#list-a-gift" className="secondary-button">
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => navigate("/add-gift")}
+              >
                 List a Gift <span>+</span>
-              </a>
+              </button>
             </div>
 
             <div className="hero-note">
@@ -202,9 +213,13 @@ function Home() {
               <p>Find something you didn't know you needed.</p>
             </div>
 
-            <a href="#categories" className="view-all-link">
-              Explore categories →
-            </a>
+            <button
+              type="button"
+              className="view-all-link"
+              onClick={() => navigate("/explore")}
+            >
+              View all gifts →
+            </button>
           </div>
 
           <div className="empty-gifts">
@@ -268,9 +283,13 @@ function Home() {
             <p>Someone out there might be looking for exactly what you have.</p>
           </div>
 
-          <a href="#top" className="primary-button">
-            Start Exploring <span>→</span>
-          </a>
+          <button
+            type="button"
+            className="primary-button"
+            onClick={() => navigate("/add-gift")}
+          >
+            List a Gift <span>+</span>
+          </button>
         </section>
 
       </main>
