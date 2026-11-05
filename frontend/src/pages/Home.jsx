@@ -1,12 +1,15 @@
 import "../styles/Home.css";
+import { useNavigate } from "react-router-dom";
+import { signOut } from "firebase/auth";
+import { auth } from "../firebase/firebase";
 
 const categories = [
   {
     name: "Food & Treats",
     image:
       "https://images.openai.com/static-rsc-4/T0RQAB9hVOcYPbncoGY603_H25YN97778nxXLB3WNX_Y84GUxoLr2JndNNjd4qUCnehwTCd4Lvws7P2wG8zxcIxpXDBUL2ey4FsIAeoi72sX4bGa9wNEfPhdZfDEpLb-qNS2JAJOjA1Qwfx7rmISY6-IQshxiqceeOwcjCPnzKo?purpose=inline",
-  description: "Delightful treats waiting for a new home.",
-  icon: "✦",
+    description: "Delightful treats waiting for a new home.",
+    icon: "✦",
   },
   {
     name: "Home & Living",
@@ -32,6 +35,15 @@ const categories = [
 ];
 
 function Home() {
+  const navigate = useNavigate();
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
   return (
     <div className="home-page">
 
@@ -54,6 +66,10 @@ function Home() {
 
           <button className="profile-button" aria-label="Profile">
             P
+          </button>
+
+          <button onClick={handleLogout} className="logout-btn">
+            Logout
           </button>
         </div>
       </header>

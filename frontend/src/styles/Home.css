@@ -8,6 +8,21 @@
   font-family: "Poppins", Arial, sans-serif;
 }
 
+.logout-btn {
+  background: #BD634B;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: "Poppins", Arial, sans-serif;
+  font-size: 14px;
+}
+
+.logout-btn:hover {
+  background: #a94f39;
+}
+
 .home-page * {
   box-sizing: border-box;
 }
