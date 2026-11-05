@@ -64,7 +64,11 @@ function Home() {
             A new home for every gift <span>♧</span>
           </span>
 
-          <button className="profile-button" aria-label="Profile">
+          <button
+            className="profile-button"
+            aria-label="Profile"
+            onClick={() => navigate("/profile")}
+          >
             P
           </button>
 
