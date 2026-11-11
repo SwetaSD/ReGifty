@@ -1,0 +1,327 @@
+/* =================================
+   MY GIFTS PAGE
+================================= */
+
+.my-gifts-page {
+  min-height: 100vh;
+  padding: 40px 6%;
+  background: #080808;
+  color: #eeeeee;
+  font-family: "Poppins", Arial, sans-serif;
+  box-sizing: border-box;
+}
+
+/* HEADER */
+
+.my-gifts-header {
+  text-align: center;
+  margin-bottom: 45px;
+}
+
+.my-gifts-header h1 {
+  color: #eeeeee;
+  font-size: 38px;
+  margin: 25px 0 10px;
+}
+
+.my-gifts-header h1 span {
+  color: #d5a14a;
+}
+
+.my-gifts-header p {
+  color: #aaaaaa;
+  font-size: 15px;
+  margin-bottom: 20px;
+}
+
+/* HEADER BUTTONS */
+
+.back-button,
+.add-new-gift {
+  padding: 11px 20px;
+  border-radius: 7px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+  transition: 0.3s ease;
+}
+
+.back-button {
+  background: transparent;
+  color: #d5a14a;
+  border: 1px solid #d5a14a;
+}
+
+.back-button:hover {
+  background: #d5a14a;
+  color: #111111;
+}
+
+.add-new-gift {
+  margin-top: 10px;
+  background: #d5a14a;
+  color: #111111;
+  border: 1px solid #d5a14a;
+  font-weight: 600;
+}
+
+.add-new-gift:hover {
+  background: #e6b65f;
+}
+
+/* GIFT GRID */
+
+.my-gifts-grid {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(240px, 1fr)
+  );
+  gap: 25px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* GIFT CARD */
+
+.my-gift-card {
+  background: #151515;
+  border: 1px solid #292929;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.my-gift-card:hover {
+  transform: translateY(-5px);
+  border-color: #d5a14a;
+}
+
+.my-gift-card img {
+  width: 100%;
+  height: 210px;
+  object-fit: cover;
+  display: block;
+}
+
+.my-gift-no-image {
+  width: 100%;
+  height: 210px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #222222;
+  color: #aaaaaa;
+}
+
+/* CARD CONTENT */
+
+.my-gift-content {
+  padding: 18px;
+}
+
+.my-gift-content h3 {
+  color: #d5a14a;
+  font-size: 19px;
+  margin: 0 0 12px;
+  word-break: break-word;
+}
+
+.my-gift-content p {
+  color: #bbbbbb;
+  font-size: 14px;
+  margin: 8px 0;
+}
+
+/* =================================
+   STATUS DROPDOWN
+================================= */
+
+.my-gifts-page .gift-status-dropdown {
+  appearance: none;
+  -webkit-appearance: none;
+
+  display: inline-block;
+  width: auto;
+  max-width: 100%;
+
+  margin: 12px 0 18px;
+  padding: 9px 34px 9px 14px;
+
+  border-radius: 25px;
+  outline: none;
+
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px 12px;
+
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* AVAILABLE - GREEN */
+
+.my-gifts-page .gift-status-dropdown.status-available {
+  background-color: #174b35 !important;
+  color: #a8dfbd !important;
+  border: 1px solid #26764e !important;
+
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23a8dfbd' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}
+
+/* NOT AVAILABLE - YELLOW */
+
+.my-gifts-page .gift-status-dropdown.status-unavailable {
+  background-color: #554516 !important;
+  color: #ffe08a !important;
+  border: 1px solid #9b7925 !important;
+
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23ffe08a' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}
+
+/* SOLD - RED */
+
+.my-gifts-page .gift-status-dropdown.status-sold {
+  background-color: #552323 !important;
+  color: #ff9999 !important;
+  border: 1px solid #a94343 !important;
+
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23ff9999' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}
+
+/* DROPDOWN OPTIONS */
+
+.my-gifts-page .gift-status-dropdown option {
+  background-color: #151515;
+  color: #ffffff;
+}
+
+/* ACTION BUTTONS */
+
+.my-gift-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.my-gift-actions button {
+  flex: 1;
+  padding: 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  transition: 0.3s ease;
+}
+
+.edit-gift-btn {
+  background: #d5a14a;
+  border: 1px solid #d5a14a;
+  color: #111111;
+}
+
+.edit-gift-btn:hover {
+  background: #e6b65f;
+}
+
+.delete-gift-btn {
+  background: transparent;
+  border: 1px solid #d9534f;
+  color: #ff7777;
+}
+
+.delete-gift-btn:hover {
+  background: #d9534f;
+  color: #ffffff;
+}
+
+.my-gift-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* EMPTY STATE */
+
+.no-gifts {
+  text-align: center;
+  margin: 70px auto;
+  max-width: 450px;
+}
+
+.no-gifts-icon {
+  font-size: 55px;
+  color: #d5a14a;
+}
+
+.no-gifts h2 {
+  color: #d5a14a;
+  font-size: 23px;
+}
+
+.no-gifts p {
+  color: #aaaaaa;
+  font-size: 14px;
+}
+
+.no-gifts button {
+  padding: 12px 22px;
+  margin-top: 15px;
+  background: #d5a14a;
+  color: #111111;
+  border: none;
+  border-radius: 7px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.no-gifts button:hover {
+  background: #e6b65f;
+}
+
+/* LOADING AND ERROR */
+
+.my-gifts-message,
+.my-gifts-error {
+  text-align: center;
+  margin: 40px auto;
+  font-size: 15px;
+}
+
+.my-gifts-message {
+  color: #d5a14a;
+}
+
+.my-gifts-error {
+  color: #ff7777;
+}
+
+/* RESPONSIVE DESIGN */
+
+@media (max-width: 600px) {
+  .my-gifts-page {
+    padding: 25px 5%;
+  }
+
+  .my-gifts-header h1 {
+    font-size: 30px;
+  }
+
+  .my-gifts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .my-gift-card img,
+  .my-gift-no-image {
+    height: 230px;
+  }
+
+  .my-gifts-page .gift-status-dropdown {
+    font-size: 13px;
+  }
+}

@@ -10,6 +10,9 @@ import Signup from "./pages/Signup";
 import Login from "./pages/Login";
 import Home from "./pages/Home";
 import Profile from "./pages/Profile";
+import MyGifts from "./pages/MyGifts";
+import EditGift from "./pages/EditGift";
+
 
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -64,6 +67,22 @@ function App() {
         element={
           <ProtectedRoute user={user} loading={loading}>
             <ExploreGifts />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/my-gifts"
+        element={
+          <ProtectedRoute user={user} loading={loading}>
+            <MyGifts />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/edit-gift/:giftId"
+        element={
+          <ProtectedRoute user={user} loading={loading}>
+            <EditGift />
           </ProtectedRoute>
         }
       />

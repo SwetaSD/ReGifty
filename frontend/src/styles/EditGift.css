@@ -1,0 +1,143 @@
+.edit-gift-page {
+  min-height: 100vh;
+  padding: 40px 5%;
+  background: #080808;
+  color: #eeeeee;
+  font-family: "Poppins", Arial, sans-serif;
+}
+
+.edit-gift-container {
+  max-width: 850px;
+  margin: 0 auto;
+  padding: 35px;
+  background: #151515;
+  border: 1px solid #292929;
+  border-radius: 14px;
+}
+
+.edit-gift-container h1 {
+  text-align: center;
+  color: #eeeeee;
+  font-size: 34px;
+  margin-top: 25px;
+}
+
+.edit-gift-container h1 span {
+  color: #d5a14a;
+}
+
+.edit-gift-subtitle {
+  text-align: center;
+  color: #aaaaaa;
+  margin-bottom: 35px;
+}
+
+.edit-back-button {
+  background: transparent;
+  color: #d5a14a;
+  border: 1px solid #d5a14a;
+  border-radius: 7px;
+  padding: 10px 16px;
+  cursor: pointer;
+}
+
+.edit-form-group {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  margin-bottom: 22px;
+  gap: 9px;
+}
+
+.edit-form-group label {
+  color: #d5a14a;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.edit-form-group input,
+.edit-form-group textarea,
+.edit-form-group select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 13px;
+  background: #222222;
+  color: #eeeeee;
+  border: 1px solid #444444;
+  border-radius: 7px;
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.edit-form-group input:focus,
+.edit-form-group textarea:focus,
+.edit-form-group select:focus {
+  outline: none;
+  border-color: #d5a14a;
+}
+
+.edit-form-group select:disabled {
+  opacity: 0.5;
+}
+
+.edit-form-row {
+  display: flex;
+  gap: 20px;
+}
+
+.edit-existing-photos {
+  padding: 14px;
+  margin-bottom: 20px;
+  background: #202b22;
+  color: #9bd6a7;
+  border-radius: 7px;
+  font-size: 13px;
+}
+
+.edit-save-button {
+  width: 100%;
+  padding: 14px;
+  background: #d5a14a;
+  color: #111111;
+  border: none;
+  border-radius: 7px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.edit-save-button:hover {
+  background: #e6b65f;
+}
+
+.edit-save-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.edit-error {
+  color: #ff7777;
+  text-align: center;
+  margin: 15px 0;
+}
+
+.edit-success {
+  color: #8bd9a2;
+  text-align: center;
+  margin: 15px 0;
+}
+
+@media (max-width: 600px) {
+  .edit-gift-container {
+    padding: 20px;
+  }
+
+  .edit-form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .edit-gift-container h1 {
+    font-size: 27px;
+  }
+}

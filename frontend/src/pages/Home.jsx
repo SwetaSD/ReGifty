@@ -58,7 +58,15 @@ function Home() {
 
         <nav className="home-nav-links">
           <a href="#categories">Explore</a>
-          <a href="#my-gifts">My Gifts</a>
+
+          <button
+            type="button"
+            onClick={() => navigate("/my-gifts")}
+            className="nav-link-button"
+          >
+            My Gifts
+          </button>
+
           <a href="#chats">Chats</a>
         </nav>
 
