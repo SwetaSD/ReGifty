@@ -1,0 +1,156 @@
+
+.gift-details-page {
+  min-height: 100vh;
+  padding: 35px 6%;
+  background: #080808;
+  color: #eeeeee;
+  font-family: "Poppins", Arial, sans-serif;
+}
+
+.back-to-explore {
+  background: transparent;
+  color: #d5a14a;
+  border: 1px solid #d5a14a;
+  padding: 10px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-bottom: 30px;
+  font-size: 14px;
+}
+
+.back-to-explore:hover {
+  background: #d5a14a;
+  color: #080808;
+}
+
+.gift-details-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 45px;
+  max-width: 1200px;
+  margin: auto;
+}
+
+.gift-details-gallery {
+  width: 100%;
+}
+
+.gift-main-image {
+  width: 100%;
+  height: 450px;
+  object-fit: contain;
+  background: #151515;
+  border-radius: 12px;
+}
+
+.gift-thumbnail-list {
+  display: flex;
+  gap: 12px;
+  margin-top: 15px;
+  flex-wrap: wrap;
+}
+
+.gift-thumbnail-list img {
+  width: 85px;
+  height: 85px;
+  object-fit: cover;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 2px solid transparent;
+}
+
+.gift-thumbnail-list img.active-thumbnail {
+  border-color: #d5a14a;
+}
+
+.gift-details-content h1 {
+  color: #d5a14a;
+  font-size: 32px;
+  margin: 12px 0;
+}
+
+.details-status {
+  display: inline-block;
+  background: #203c2a;
+  color: #8bd9a2;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+}
+
+.details-value {
+  font-size: 19px;
+  font-weight: 600;
+  margin: 15px 0 25px;
+}
+
+.details-section {
+  border-top: 1px solid #333;
+  padding: 18px 0;
+}
+
+.details-section h3 {
+  color: #d5a14a;
+  margin-bottom: 12px;
+}
+
+.details-section p {
+  color: #bbbbbb;
+  line-height: 1.7;
+  font-size: 14px;
+}
+
+.details-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 10px 0;
+  border-bottom: 1px solid #222;
+  font-size: 14px;
+}
+
+.details-row span:first-child {
+  color: #999999;
+}
+
+.details-row span:last-child {
+  color: #eeeeee;
+  text-align: right;
+}
+
+.gift-details-message {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  background: #080808;
+  color: #eeeeee;
+  text-align: center;
+}
+
+.gift-no-image {
+  height: 300px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #151515;
+  color: #aaaaaa;
+  border-radius: 12px;
+}
+
+@media (max-width: 768px) {
+  .gift-details-container {
+    grid-template-columns: 1fr;
+    gap: 25px;
+  }
+
+  .gift-main-image {
+    height: 320px;
+  }
+
+  .gift-details-content h1 {
+    font-size: 26px;
+  }
+}

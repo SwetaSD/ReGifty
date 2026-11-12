@@ -3,6 +3,8 @@ import { Routes, Route } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
 import AddGift from "./pages/AddGift";
 import ExploreGifts from "./pages/ExploreGifts";
+import GiftDetails from "./pages/GiftDetails";
+import IncomingRequests from "./pages/IncomingRequests";
 
 import { auth } from "./firebase/firebase";
 
@@ -12,6 +14,9 @@ import Home from "./pages/Home";
 import Profile from "./pages/Profile";
 import MyGifts from "./pages/MyGifts";
 import EditGift from "./pages/EditGift";
+
+import Chats from "./pages/Chats";
+import ChatWindow from "./pages/ChatWindow";
 
 
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -71,6 +76,14 @@ function App() {
         }
       />
       <Route
+        path="/gift/:giftId"
+        element={
+          <ProtectedRoute user={user} loading={loading}>
+            <GiftDetails />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/my-gifts"
         element={
           <ProtectedRoute user={user} loading={loading}>
@@ -83,6 +96,31 @@ function App() {
         element={
           <ProtectedRoute user={user} loading={loading}>
             <EditGift />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/incoming-requests"
+        element={
+          <ProtectedRoute user={user} loading={loading}>
+            <IncomingRequests />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/chats"
+        element={
+          <ProtectedRoute user={user} loading={loading}>
+            <Chats />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/chat/:chatId"
+        element={
+          <ProtectedRoute user={user} loading={loading}>
+            <ChatWindow />
           </ProtectedRoute>
         }
       />

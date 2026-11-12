@@ -1,8 +1,15 @@
 
 import "../styles/Home.css";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { signOut } from "firebase/auth";
-import { auth } from "../firebase/firebase";
+import {
+  collection,
+  query,
+  where,
+  onSnapshot,
+} from "firebase/firestore";
+import { auth, db } from "../firebase/firebase";
 
 const categories = [
   {
@@ -37,6 +44,90 @@ const categories = [
 
 function Home() {
   const navigate = useNavigate();
+  const [notificationCount, setNotificationCount] = useState(0);
+
+  useEffect(() => {
+    const currentUser = auth.currentUser;
+
+    if (!currentUser) return;
+
+    let buyerRequests = [];
+    let sellerRequests = [];
+
+    const updateNotificationCount = () => {
+      const allRequests = new Map();
+
+      [...buyerRequests, ...sellerRequests].forEach((request) => {
+        allRequests.set(request.id, request);
+      });
+
+      let count = 0;
+
+      allRequests.forEach((request) => {
+        if (request.status !== "Accepted") return;
+
+        const isBuyer = request.requesterUid === currentUser.uid;
+        const isSeller = request.ownerUid === currentUser.uid;
+
+        if (!isBuyer && !isSeller) return;
+
+        const myConfirmation = isBuyer
+          ? request.buyerConfirmed === true
+          : request.sellerConfirmed === true;
+
+        const otherConfirmation = isBuyer
+          ? request.sellerConfirmed === true
+          : request.buyerConfirmed === true;
+
+        if (!myConfirmation && otherConfirmation) {
+          count++;
+        }
+      });
+
+      setNotificationCount(count);
+    };
+
+    const buyerQuery = query(
+      collection(db, "requests"),
+      where("requesterUid", "==", currentUser.uid)
+    );
+
+    const sellerQuery = query(
+      collection(db, "requests"),
+      where("ownerUid", "==", currentUser.uid)
+    );
+
+    const unsubscribeBuyer = onSnapshot(
+      buyerQuery,
+      (snapshot) => {
+        buyerRequests = snapshot.docs.map((item) => ({
+          id: item.id,
+          ...item.data(),
+        }));
+
+        updateNotificationCount();
+      },
+      (error) => console.error("Buyer notification listener:", error)
+    );
+
+    const unsubscribeSeller = onSnapshot(
+      sellerQuery,
+      (snapshot) => {
+        sellerRequests = snapshot.docs.map((item) => ({
+          id: item.id,
+          ...item.data(),
+        }));
+
+        updateNotificationCount();
+      },
+      (error) => console.error("Seller notification listener:", error)
+    );
+
+    return () => {
+      unsubscribeBuyer();
+      unsubscribeSeller();
+    };
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -49,7 +140,6 @@ function Home() {
 
   return (
     <div className="home-page">
-
       {/* NAVBAR */}
       <header className="home-navbar">
         <a href="#top" className="home-logo">
@@ -67,7 +157,27 @@ function Home() {
             My Gifts
           </button>
 
-          <a href="#chats">Chats</a>
+          <button
+            type="button"
+            onClick={() => navigate("/chats")}
+            className="nav-link-button"
+          >
+            Chats
+          </button>
+
+          <button
+            type="button"
+            onClick={() => navigate("/incoming-requests")}
+            className="nav-link-button notification-nav-button"
+          >
+            Incoming Requests
+
+            {notificationCount > 0 && (
+              <span className="request-notification-badge">
+                {notificationCount > 99 ? "99+" : notificationCount}
+              </span>
+            )}
+          </button>
         </nav>
 
         <div className="home-nav-right">
@@ -90,10 +200,8 @@ function Home() {
       </header>
 
       <main id="top">
-
         {/* HERO SECTION */}
         <section className="hero-section">
-
           <div className="hero-content">
             <span className="hero-label">
               ♧ GIVE A GIFT A SECOND LIFE
@@ -142,7 +250,6 @@ function Home() {
               <p>Every gift deserves another story.</p>
             </div>
           </div>
-
         </section>
 
         {/* EXCHANGE OPTIONS */}
@@ -154,7 +261,6 @@ function Home() {
           </div>
 
           <div className="exchange-grid">
-
             <div className="exchange-card">
               <div className="exchange-icon">⇄</div>
               <h3>Swap</h3>
@@ -175,13 +281,11 @@ function Home() {
               <p>Find a gift you love or sell something you no longer need.</p>
               <a href="#categories">Explore marketplace →</a>
             </div>
-
           </div>
         </section>
 
         {/* CATEGORIES */}
         <section className="categories-section" id="categories">
-
           <div className="section-heading">
             <span className="section-label">FIND YOUR NEXT TREASURE</span>
             <h2>Explore <span>Categories.</span></h2>
@@ -208,12 +312,10 @@ function Home() {
               </a>
             ))}
           </div>
-
         </section>
 
         {/* RECENTLY LISTED GIFTS */}
         <section className="recent-section" id="recently-listed">
-
           <div className="recent-heading">
             <div className="section-heading">
               <span className="section-label">DISCOVER SOMETHING NEW</span>
@@ -238,12 +340,10 @@ function Home() {
               Keep exploring and find your next favourite thing.
             </p>
           </div>
-
         </section>
 
         {/* HOW IT WORKS */}
         <section className="how-section" id="how-it-works">
-
           <div className="section-heading">
             <span className="section-label">SIMPLE. THOUGHTFUL. FUN.</span>
             <h2>How ReGifty <span>Works.</span></h2>
@@ -251,7 +351,6 @@ function Home() {
           </div>
 
           <div className="steps-grid">
-
             <div className="step-card">
               <span className="step-number">01</span>
               <div className="step-icon">＋</div>
@@ -279,7 +378,6 @@ function Home() {
               <h3>ReGift!</h3>
               <p>Complete the exchange and give your gift a new home.</p>
             </div>
-
           </div>
         </section>
 
@@ -299,7 +397,6 @@ function Home() {
             List a Gift <span>+</span>
           </button>
         </section>
-
       </main>
 
       {/* FOOTER */}
@@ -308,7 +405,6 @@ function Home() {
         <p>A new home for every gift ♧</p>
         <span>© 2026 ReGifty. Give again. Receive differently.</span>
       </footer>
-
     </div>
   );
 }

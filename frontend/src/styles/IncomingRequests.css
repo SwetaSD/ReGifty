@@ -1,0 +1,163 @@
+
+.incoming-requests-page {
+  min-height: 100vh;
+  padding: 40px 6%;
+  background: #080808;
+  color: #eeeeee;
+  font-family: "Poppins", Arial, sans-serif;
+}
+
+.requests-back-button {
+  padding: 10px 18px;
+  background: transparent;
+  color: #d5a14a;
+  border: 1px solid #d5a14a;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.requests-back-button:hover {
+  background: #d5a14a;
+  color: #080808;
+}
+
+.requests-header {
+  text-align: center;
+  margin: 45px 0 40px;
+}
+
+.requests-header h1 {
+  color: #d5a14a;
+  font-size: 36px;
+  margin-bottom: 12px;
+}
+
+.requests-header p {
+  color: #aaaaaa;
+  font-size: 15px;
+}
+
+.requests-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 25px;
+}
+
+.request-card {
+  background: #151515;
+  border: 1px solid #333333;
+  border-radius: 12px;
+  padding: 25px;
+  transition: transform 0.2s ease;
+}
+
+.request-card:hover {
+  transform: translateY(-4px);
+}
+
+.request-card h3 {
+  color: #d5a14a;
+  font-size: 20px;
+  margin-bottom: 12px;
+}
+
+.request-card p {
+  color: #bbbbbb;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.request-status {
+  margin-top: 18px;
+  color: #cccccc;
+  font-size: 14px;
+}
+
+.request-status strong {
+  color: #d5a14a;
+}
+
+.request-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.accept-request-button,
+.reject-request-button {
+  flex: 1;
+  padding: 11px;
+  border: none;
+  border-radius: 7px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.accept-request-button {
+  background: #d5a14a;
+  color: #080808;
+}
+
+.accept-request-button:hover {
+  background: #e8b963;
+}
+
+.reject-request-button {
+  background: #392020;
+  color: #ff9999;
+  border: 1px solid #754040;
+}
+
+.reject-request-button:hover {
+  background: #552828;
+}
+
+.accept-request-button:disabled,
+.reject-request-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.no-requests {
+  text-align: center;
+  margin: 80px auto;
+  padding: 45px 20px;
+  background: #151515;
+  border: 1px solid #333333;
+  border-radius: 12px;
+  max-width: 650px;
+}
+
+.no-requests h3 {
+  color: #d5a14a;
+  font-size: 22px;
+  margin-bottom: 12px;
+}
+
+.no-requests p {
+  color: #aaaaaa;
+  line-height: 1.6;
+}
+
+.requests-error {
+  text-align: center;
+  color: #ff7777;
+  margin: 20px 0;
+}
+
+@media (max-width: 600px) {
+  .incoming-requests-page {
+    padding: 25px 5%;
+  }
+
+  .requests-header h1 {
+    font-size: 28px;
+  }
+
+  .request-actions {
+    flex-direction: column;
+  }
+}
