@@ -5,11 +5,12 @@ import {
   collection,
   query,
   where,
-  onSnapshot,
+  getDoc,
   doc,
   updateDoc,
   serverTimestamp,
   writeBatch,
+  onSnapshot,
 } from "firebase/firestore";
 
 import { db, auth } from "../firebase/firebase";
@@ -24,7 +25,7 @@ function IncomingRequests() {
   const [error, setError] = useState("");
   const [updatingId, setUpdatingId] = useState(null);
 
-  // Listen to requests where the user is buyer or seller
+  // LOAD BUYER AND SELLER REQUESTS
   useEffect(() => {
     const currentUser = auth.currentUser;
 
@@ -36,17 +37,71 @@ function IncomingRequests() {
 
     let buyerRequests = [];
     let sellerRequests = [];
-    let buyerLoaded = false;
-    let sellerLoaded = false;
+    let active = true;
 
-    const updateRequests = () => {
-      const requestMap = new Map();
+    const loadRequests = async () => {
+      try {
+        const requestMap = new Map();
 
-      [...buyerRequests, ...sellerRequests].forEach((item) => {
-        requestMap.set(item.id, item);
-      });
+        [...buyerRequests, ...sellerRequests].forEach((request) => {
+          requestMap.set(request.id, request);
+        });
 
-      setRequests(Array.from(requestMap.values()));
+        const uniqueRequests = Array.from(requestMap.values());
+
+        // CHECK WHETHER EACH ORIGINAL GIFT STILL EXISTS
+        const requestsWithGiftStatus = await Promise.all(
+          uniqueRequests.map(async (request) => {
+            // Use the permanent deletion flag first
+            if (request.listingDeleted === true) {
+              return {
+                ...request,
+                giftDeleted: true,
+              };
+            }
+
+            try {
+              const giftSnapshot = await getDoc(
+                doc(db, "gifts", request.giftId)
+              );
+
+              return {
+                ...request,
+                giftDeleted: !giftSnapshot.exists(),
+              };
+            } catch (err) {
+              console.error(
+                "Error checking gift:",
+                request.giftId,
+                err
+              );
+
+              return {
+                ...request,
+                giftDeleted: false,
+              };
+            }
+          })
+        );
+
+        if (active) {
+          requestsWithGiftStatus.sort((a, b) => {
+            const timeA = a.createdAt?.toMillis?.() || 0;
+            const timeB = b.createdAt?.toMillis?.() || 0;
+            return timeB - timeA;
+          });
+
+          setRequests(requestsWithGiftStatus);
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error("Error loading requests:", err);
+
+        if (active) {
+          setError("Unable to load requests. Please try again.");
+          setLoading(false);
+        }
+      }
     };
 
     const buyerQuery = query(
@@ -62,22 +117,16 @@ function IncomingRequests() {
     const unsubscribeBuyer = onSnapshot(
       buyerQuery,
       (snapshot) => {
-        buyerRequests = snapshot.docs.map((item) => ({
-          id: item.id,
-          ...item.data(),
+        buyerRequests = snapshot.docs.map((requestDoc) => ({
+          id: requestDoc.id,
+          ...requestDoc.data(),
         }));
 
-        buyerLoaded = true;
-        updateRequests();
-
-        if (buyerLoaded && sellerLoaded) {
-          setLoading(false);
-          setError("");
-        }
+        loadRequests();
       },
       (err) => {
         console.error("Buyer requests error:", err);
-        setError("Unable to load your requests.");
+        setError("Unable to load sent requests.");
         setLoading(false);
       }
     );
@@ -85,33 +134,28 @@ function IncomingRequests() {
     const unsubscribeSeller = onSnapshot(
       sellerQuery,
       (snapshot) => {
-        sellerRequests = snapshot.docs.map((item) => ({
-          id: item.id,
-          ...item.data(),
+        sellerRequests = snapshot.docs.map((requestDoc) => ({
+          id: requestDoc.id,
+          ...requestDoc.data(),
         }));
 
-        sellerLoaded = true;
-        updateRequests();
-
-        if (buyerLoaded && sellerLoaded) {
-          setLoading(false);
-          setError("");
-        }
+        loadRequests();
       },
       (err) => {
         console.error("Seller requests error:", err);
-        setError("Unable to load your requests.");
+        setError("Unable to load received requests.");
         setLoading(false);
       }
     );
 
     return () => {
+      active = false;
       unsubscribeBuyer();
       unsubscribeSeller();
     };
   }, []);
 
-  // Seller accepts or rejects a pending request
+  // ACCEPT OR REJECT REQUEST (SELLER ONLY)
   const handleRequestAction = async (requestId, newStatus) => {
     try {
       setUpdatingId(requestId);
@@ -131,14 +175,30 @@ function IncomingRequests() {
         throw new Error("Request not found.");
       }
 
+      if (
+        request.listingDeleted === true ||
+        request.giftDeleted === true
+      ) {
+        throw new Error(
+          "This gift listing has been deleted. The request can no longer be processed."
+        );
+      }
+
       if (request.ownerUid !== currentUser.uid) {
-        throw new Error("Only the gift owner can accept or reject.");
+        throw new Error(
+          "Only the gift owner can accept or reject."
+        );
+      }
+
+      if (request.status !== "Pending") {
+        throw new Error("This request has already been processed.");
       }
 
       const requestRef = doc(db, "requests", requestId);
 
       if (newStatus === "Accepted") {
         const batch = writeBatch(db);
+
         const chatRef = doc(db, "chats", requestId);
 
         const systemMessage =
@@ -185,12 +245,19 @@ function IncomingRequests() {
       }
     } catch (err) {
       console.error("Error updating request:", err);
+
       setError(
-        err.message || "Unable to update the request. Please try again."
+        err.message ||
+        "Unable to update the request. Please try again."
       );
     } finally {
       setUpdatingId(null);
     }
+  };
+
+  // OPEN EXISTING CHAT
+  const handleOpenChat = (request) => {
+    navigate(`/chat/${request.id}`);
   };
 
   if (loading) {
@@ -215,9 +282,10 @@ function IncomingRequests() {
 
       <div className="requests-header">
         <h1>Incoming Requests</h1>
+
         <p>
-          View your sent and received requests,
-          and check exchange confirmation notifications.
+          View your sent and received requests, and check
+          exchange confirmation notifications.
         </p>
       </div>
 
@@ -228,6 +296,7 @@ function IncomingRequests() {
       {requests.length === 0 ? (
         <div className="no-requests">
           <h3>No requests yet!</h3>
+
           <p>
             Your sent and received exchange requests
             will appear here.
@@ -237,8 +306,11 @@ function IncomingRequests() {
         <div className="requests-grid">
 
           {requests.map((request) => {
-            const isBuyer = request.requesterUid === currentUid;
-            const isSeller = request.ownerUid === currentUid;
+            const isBuyer =
+              request.requesterUid === currentUid;
+
+            const isSeller =
+              request.ownerUid === currentUid;
 
             const buyerConfirmed =
               request.buyerConfirmed === true;
@@ -256,11 +328,18 @@ function IncomingRequests() {
 
             const needsMyConfirmation =
               request.status === "Accepted" &&
-              !myConfirmation &&
-              otherConfirmation;
+              otherConfirmation &&
+              !myConfirmation;
+
+            const isListingDeleted =
+              request.listingDeleted === true ||
+              request.giftDeleted === true;
 
             return (
-              <div className="request-card" key={request.id}>
+              <div
+                className="request-card"
+                key={request.id}
+              >
 
                 <h3>{request.giftName}</h3>
 
@@ -274,123 +353,195 @@ function IncomingRequests() {
                   Status: <strong>{request.status}</strong>
                 </div>
 
-                {/* Pending request */}
-                {request.status === "Pending" && (
-                  isSeller ? (
-                    <div className="request-actions">
+                {/* DELETED GIFT NOTICE */}
+                {isListingDeleted && (
+                  <div className="deleted-listing-notice">
+                    <h4>Listing deleted by owner</h4>
 
-                      <button
-                        className="accept-request-button"
-                        disabled={updatingId === request.id}
-                        onClick={() =>
-                          handleRequestAction(request.id, "Accepted")
-                        }
-                      >
-                        {updatingId === request.id
-                          ? "Updating..."
-                          : "Accept"}
-                      </button>
-
-                      <button
-                        className="reject-request-button"
-                        disabled={updatingId === request.id}
-                        onClick={() =>
-                          handleRequestAction(request.id, "Rejected")
-                        }
-                      >
-                        Reject
-                      </button>
-
-                    </div>
-                  ) : (
                     <p>
-                      Waiting for the seller to respond to your request.
+                      This gift is no longer available on ReGifty.
+                      The previous exchange request is retained
+                      for your records.
                     </p>
-                  )
+
+                    <p>
+                      This exchange cannot continue because
+                      the original listing has been deleted.
+                    </p>
+                  </div>
                 )}
 
-                {/* Rejected request */}
-                {request.status === "Rejected" && (
-                  <p>This exchange request was rejected.</p>
-                )}
+                {/* PENDING REQUEST */}
+                {!isListingDeleted &&
+                  request.status === "Pending" && (
+                    isSeller ? (
+                      <div className="request-actions">
 
-                {/* Accepted request: reminder only */}
-                {request.status === "Accepted" && (
-                  <div className="exchange-confirmation">
+                        <button
+                          className="accept-request-button"
+                          disabled={updatingId === request.id}
+                          onClick={() =>
+                            handleRequestAction(
+                              request.id,
+                              "Accepted"
+                            )
+                          }
+                        >
+                          {updatingId === request.id
+                            ? "Updating..."
+                            : "Accept"}
+                        </button>
 
-                    <h4>Exchange Confirmation</h4>
+                        <button
+                          className="reject-request-button"
+                          disabled={updatingId === request.id}
+                          onClick={() =>
+                            handleRequestAction(
+                              request.id,
+                              "Rejected"
+                            )
+                          }
+                        >
+                          Reject
+                        </button>
 
-                    <div className="confirmation-status">
-                      <span>Buyer approval</span>
-                      <strong>
-                        {buyerConfirmed ? "Confirmed ✓" : "Pending"}
-                      </strong>
-                    </div>
-
-                    <div className="confirmation-status">
-                      <span>Seller approval</span>
-                      <strong>
-                        {sellerConfirmed ? "Confirmed ✓" : "Pending"}
-                      </strong>
-                    </div>
-
-                    {needsMyConfirmation ? (
-                      <p>
-                        <strong>Action required:</strong>{" "}
-                        The other person has confirmed the exchange.
-                        Please open Chat to review and confirm your side.
-                      </p>
-                    ) : myConfirmation ? (
-                      <p>
-                        You have confirmed. Waiting for the other person.
-                      </p>
+                      </div>
                     ) : (
                       <p>
-                        Discuss the exchange in Chat. Both people
-                        must confirm before it is finalized.
+                        Waiting for the seller to respond
+                        to your request.
                       </p>
-                    )}
+                    )
+                  )}
 
-                    <button
-                      className="open-chat-button"
-                      onClick={() => navigate(`/chat/${request.id}`)}
-                    >
-                      Open Chat
-                    </button>
-
-                  </div>
-                )}
-
-                {/* Both users confirmed */}
-                {request.status === "Confirmed" && (
-                  <div className="exchange-confirmation">
-
-                    <h4>Exchange Confirmed!</h4>
-
-                    <div className="confirmation-status">
-                      <span>Buyer approval</span>
-                      <strong>Confirmed ✓</strong>
-                    </div>
-
-                    <div className="confirmation-status">
-                      <span>Seller approval</span>
-                      <strong>Confirmed ✓</strong>
-                    </div>
-
+                {/* REJECTED REQUEST */}
+                {!isListingDeleted &&
+                  request.status === "Rejected" && (
                     <p>
-                      Both users have approved this exchange.
-                      You can coordinate delivery in Chat.
+                      This exchange request was rejected.
                     </p>
+                  )}
 
-                    <button
-                      className="open-chat-button"
-                      onClick={() => navigate(`/chat/${request.id}`)}
-                    >
-                      Open Chat
-                    </button>
+                {/* ACCEPTED REQUEST */}
+                {!isListingDeleted &&
+                  request.status === "Accepted" && (
+                    <div className="exchange-confirmation">
 
-                  </div>
-                )}
+                      <h4>Exchange Confirmation</h4>
+
+                      <div className="confirmation-status">
+                        <span>Buyer approval</span>
+
+                        <strong>
+                          {buyerConfirmed
+                            ? "Confirmed ✓"
+                            : "Pending"}
+                        </strong>
+                      </div>
+
+                      <div className="confirmation-status">
+                        <span>Seller approval</span>
+
+                        <strong>
+                          {sellerConfirmed
+                            ? "Confirmed ✓"
+                            : "Pending"}
+                        </strong>
+                      </div>
+
+                      {needsMyConfirmation && (
+                        <div className="confirmation-notification">
+                          <h4>Your action is required!</h4>
+
+                          <p>
+                            {isBuyer
+                              ? "The seller has confirmed the exchange. Now it's your turn to confirm."
+                              : "The buyer has confirmed the exchange. Now it's your turn to confirm."}
+                          </p>
+
+                          <p>
+                            Open Chat to continue talking
+                            and confirm your exchange.
+                          </p>
+                        </div>
+                      )}
+
+                      {myConfirmation && !otherConfirmation && (
+                        <p>
+                          You have confirmed. Waiting for
+                          the other person to confirm.
+                        </p>
+                      )}
+
+                      {!myConfirmation && !otherConfirmation && (
+                        <p>
+                          Discuss the exchange in Chat.
+                          Confirm when both of you agree.
+                        </p>
+                      )}
+
+                      <button
+                        className="open-chat-button"
+                        onClick={() => handleOpenChat(request)}
+                      >
+                        Open Chat
+                      </button>
+
+                    </div>
+                  )}
+
+                {/* BOTH USERS CONFIRMED */}
+                {!isListingDeleted &&
+                  request.status === "Confirmed" && (
+                    <div className="exchange-confirmation">
+
+                      <h4>Exchange Confirmed!</h4>
+
+                      <div className="confirmation-status">
+                        <span>Buyer approval</span>
+                        <strong>Confirmed ✓</strong>
+                      </div>
+
+                      <div className="confirmation-status">
+                        <span>Seller approval</span>
+                        <strong>Confirmed ✓</strong>
+                      </div>
+
+                      <p>
+                        Both users have approved this exchange.
+                        You can continue coordinating in Chat.
+                      </p>
+
+                      <button
+                        className="open-chat-button"
+                        onClick={() => handleOpenChat(request)}
+                      >
+                        Open Chat
+                      </button>
+
+                    </div>
+                  )}
+
+                {/* CLOSED CHAT HISTORY */}
+                {isListingDeleted &&
+                  (request.status === "Accepted" ||
+                    request.status === "Confirmed") && (
+                    <div className="exchange-confirmation">
+                      <h4>Conversation closed</h4>
+
+                      <p>
+                        Exchange confirmation and messaging
+                        are disabled for this deleted listing.
+                      </p>
+
+                      <button
+                        className="open-chat-button"
+                        onClick={() => handleOpenChat(request)}
+                      >
+                        View Chat History
+                      </button>
+                    </div>
+                  )}
 
               </div>
             );

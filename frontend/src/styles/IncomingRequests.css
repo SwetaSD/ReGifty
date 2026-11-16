@@ -161,3 +161,37 @@
     flex-direction: column;
   }
 }
+
+.deleted-listing-notice {
+  margin-top: 18px;
+  padding: 14px;
+  border: 1px solid #a94442;
+  border-radius: 10px;
+  background: rgba(169, 68, 66, 0.10);
+}
+
+.deleted-listing-notice h4 {
+  color: #e57373;
+  margin: 0 0 8px;
+}
+
+.deleted-listing-notice p {
+  margin: 0;
+}
+
+.confirmation-notification {
+  margin-top: 18px;
+  padding: 15px;
+  border: 1px solid #d8ad5e;
+  border-radius: 10px;
+  background: rgba(216, 173, 94, 0.10);
+}
+
+.confirmation-notification h4 {
+  color: #e2b65f;
+  margin: 0 0 8px;
+}
+
+.confirmation-notification p {
+  margin: 7px 0;
+}

@@ -72,22 +72,28 @@ function Chats() {
   return (
     <div className="chats-page">
       <div className="chats-container">
+
         <div className="chats-header">
           <h1>My Chats</h1>
           <p>Your accepted gift exchanges appear here.</p>
         </div>
 
         {loading && (
-          <p className="chats-message">Loading your chats...</p>
+          <p className="chats-message">
+            Loading your chats...
+          </p>
         )}
 
         {error && (
-          <p className="chats-error">{error}</p>
+          <p className="chats-error">
+            {error}
+          </p>
         )}
 
         {!loading && !error && chats.length === 0 && (
           <div className="chats-empty">
             <h2>No conversations yet</h2>
+
             <p>
               Once a gift exchange request is accepted,
               your conversation will appear here.
@@ -97,30 +103,49 @@ function Chats() {
 
         {!loading && chats.length > 0 && (
           <div className="chats-list">
-            {chats.map((chat) => (
-              <div className="chat-card" key={chat.id}>
-                <div className="chat-card-info">
-                  <h3>{chat.giftName || "Gift Exchange"}</h3>
 
-                  <p className="chat-last-message">
-                    {chat.lastMessage || "Start your conversation"}
-                  </p>
+            {chats.map((chat) => {
+              const isClosed = chat.isClosed === true;
 
-                  <span className="chat-time">
-                    {formatTime(chat.lastMessageAt)}
-                  </span>
+              return (
+                <div className="chat-card" key={chat.id}>
+
+                  <div className="chat-card-info">
+
+                    <h3>
+                      {chat.giftName || "Gift Exchange"}
+                    </h3>
+
+                    <p className="chat-last-message">
+                      {chat.lastMessage || "Start your conversation"}
+                    </p>
+
+                    <span className="chat-time">
+                      {formatTime(chat.lastMessageAt)}
+                    </span>
+
+                    {isClosed && (
+                      <p className="chat-closed-status">
+                        Chat Closed · Listing deleted
+                      </p>
+                    )}
+
+                  </div>
+
+                  <button
+                    className="open-chat-button"
+                    onClick={() => navigate(`/chat/${chat.id}`)}
+                  >
+                    {isClosed ? "View History" : "Open Chat"}
+                  </button>
+
                 </div>
+              );
+            })}
 
-                <button
-                  className="open-chat-button"
-                  onClick={() => navigate(`/chat/${chat.id}`)}
-                >
-                  Open Chat
-                </button>
-              </div>
-            ))}
           </div>
         )}
+
       </div>
     </div>
   );

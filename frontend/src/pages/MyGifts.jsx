@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 
 import {
@@ -5,10 +6,10 @@ import {
   getDocs,
   query,
   where,
-  deleteDoc,
   doc,
   updateDoc,
   serverTimestamp,
+  writeBatch,
 } from "firebase/firestore";
 
 import { db, auth } from "../firebase/firebase";
@@ -98,7 +99,6 @@ function MyGifts() {
 
     const previousStatus = selectedGift.status;
 
-    // Update UI immediately, including dropdown colour
     setGifts((prevGifts) =>
       prevGifts.map((gift) =>
         gift.id === giftId
@@ -115,7 +115,6 @@ function MyGifts() {
     } catch (err) {
       console.error("Status update error:", err);
 
-      // Restore previous status if update fails
       setGifts((prevGifts) =>
         prevGifts.map((gift) =>
           gift.id === giftId
@@ -128,7 +127,8 @@ function MyGifts() {
     }
   };
 
-  //DELETE GIFT LISTING AND ITS SUPABASE FILES
+  // DELETE GIFT, CLOSE RELATED REQUESTS AND CHATS,
+  // AND CLEAN UP SUPABASE FILES
   const handleDelete = async (giftId) => {
     const confirmed = window.confirm(
       "Are you sure you want to delete this gift listing? This action cannot be undone."
@@ -160,51 +160,148 @@ function MyGifts() {
         );
       }
 
-      // 1. DELETE GIFT PHOTOS FROM SUPABASE
-      const imagePaths = selectedGift.imagePaths || [];
-      console.log("Gift ID:", giftId);
-      console.log("Image paths from Firestore:", imagePaths);
-      console.log("Invoice path from Firestore:", selectedGift.invoicePath);
+      // 1. FIND ALL REQUESTS BELONGING TO THIS OWNER
+      const requestsQuery = query(
+        collection(db, "requests"),
+        where("ownerUid", "==", currentUser.uid)
+      );
 
+      const requestsSnapshot = await getDocs(requestsQuery);
+
+      const relatedRequests = requestsSnapshot.docs.filter(
+        (requestDoc) => {
+          const requestData = requestDoc.data();
+
+          return requestData.giftId === giftId;
+        }
+      );
+
+      const requestIds = new Set(
+        relatedRequests.map((requestDoc) => requestDoc.id)
+      );
+
+      // 2. FIND ALL CHATS INVOLVING THIS USER
+      const chatsQuery = query(
+        collection(db, "chats"),
+        where("participants", "array-contains", currentUser.uid)
+      );
+
+      const chatsSnapshot = await getDocs(chatsQuery);
+
+      const relatedChats = chatsSnapshot.docs.filter(
+        (chatDoc) => {
+          const chatData = chatDoc.data();
+
+          const belongsToGift = chatData.giftId === giftId;
+
+          const belongsToRequest = requestIds.has(
+            chatData.requestId
+          );
+
+          return (
+            chatData.sellerUid === currentUser.uid &&
+            (belongsToGift || belongsToRequest)
+          );
+        }
+      );
+
+      // 3. CREATE A FIRESTORE BATCH
+      const batch = writeBatch(db);
+
+      let operationCount = 0;
+
+      // Mark related requests as listing deleted
+      relatedRequests.forEach((requestDoc) => {
+        const requestData = requestDoc.data();
+
+        // Do not update an already closed request
+        if (requestData.listingDeleted === true) {
+          return;
+        }
+
+        batch.update(requestDoc.ref, {
+          listingDeleted: true,
+          updatedAt: serverTimestamp(),
+        });
+
+        operationCount++;
+      });
+
+      // Close related chats
+      relatedChats.forEach((chatDoc) => {
+        const chatData = chatDoc.data();
+
+        // Do not update an already closed chat
+        if (chatData.isClosed === true) {
+          return;
+        }
+
+        batch.update(chatDoc.ref, {
+          isClosed: true,
+          closedAt: serverTimestamp(),
+        });
+
+        operationCount++;
+      });
+
+      // Delete the gift document
+      batch.delete(doc(db, "gifts", giftId));
+
+      operationCount++;
+
+      // Firestore allows a maximum of 500 writes per batch
+      if (operationCount > 500) {
+        throw new Error(
+          "Too many related requests or chats to delete in one operation. Please contact support."
+        );
+      }
+
+      // 4. COMMIT ALL FIRESTORE CHANGES TOGETHER
+      await batch.commit();
+
+      console.log("Related requests closed:", relatedRequests.length);
+      console.log("Related chats closed:", relatedChats.length);
+      console.log("Gift listing deleted:", giftId);
+
+      // 5. REMOVE GIFT CARD FROM UI
+      setGifts((previousGifts) =>
+        previousGifts.filter((gift) => gift.id !== giftId)
+      );
+
+      // 6. DELETE GIFT PHOTOS FROM SUPABASE
+      const imagePaths = selectedGift.imagePaths || [];
 
       if (imagePaths.length > 0) {
-        const { data, error: imageError } = await supabase.storage
+        const { error: imageError } = await supabase.storage
           .from("gift-images")
           .remove(imagePaths);
 
-        console.log("Supabase image deletion response:", data);
-        console.log("Supabase image deletion error:", imageError);
-
         if (imageError) {
-          throw new Error(
-            "Unable to delete gift photos: " + imageError.message
+          console.error("Image cleanup error:", imageError);
+
+          setError(
+            "The listing and chats were successfully closed, but some gift photos could not be removed from storage."
           );
         }
-      } else {
-        console.error("No image paths found in Firestore!");
-        throw new Error("Image paths are missing. Gift was not deleted.");
       }
 
-      // 2. DELETE INVOICE FROM SUPABASE
+      // 7. DELETE INVOICE FROM SUPABASE
       if (selectedGift.invoicePath) {
         const { error: invoiceError } = await supabase.storage
           .from("gift-invoices")
           .remove([selectedGift.invoicePath]);
 
         if (invoiceError) {
-          throw new Error(
-            "Unable to delete gift invoice: " + invoiceError.message
+          console.error("Invoice cleanup error:", invoiceError);
+
+          setError((previousError) =>
+            previousError
+              ? previousError +
+                " The invoice could not be removed from storage."
+              : "The listing and chats were successfully closed, but the invoice could not be removed from storage."
           );
         }
       }
-
-      // 3. DELETE GIFT DOCUMENT FROM FIRESTORE
-      await deleteDoc(doc(db, "gifts", giftId));
-
-      // 4. REMOVE GIFT CARD FROM UI
-      setGifts((previousGifts) =>
-        previousGifts.filter((gift) => gift.id !== giftId)
-      );
 
     } catch (err) {
       console.error("Delete gift error:", err);
